@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Load the dataset
 data_path = '../data/Advertising_N200_p3.csv'  # Path to dataset
@@ -31,7 +32,8 @@ def compute_cost(X, y, beta):
 def mini_batch_gradient_descent(X, y, beta, learning_rate, iterations, batch_size):
     m = len(y)  # Number of observations
     cost_history = []  # List to store cost after each iteration
-    
+    beta_history = []  # List to store the evolution of beta (coefficients)
+
     for it in range(iterations):
         # Shuffle data at the start of each iteration
         idx = np.random.permutation(m)
@@ -56,23 +58,53 @@ def mini_batch_gradient_descent(X, y, beta, learning_rate, iterations, batch_siz
         cost = compute_cost(X, y, beta)
         cost_history.append(cost)
 
+        # Store the beta values for each iteration
+        beta_history.append(beta.copy())
+
         # Print cost for every 1000th iteration
         if it % 1000 == 0:
             print(f"Iteration {it}: Cost {cost}")
 
-    return beta, cost_history
+    return beta, cost_history, beta_history
 
 # Run mini-batch gradient descent
-final_beta, cost_history = mini_batch_gradient_descent(X, y, beta, learning_rate, iterations, batch_size)
+final_beta, cost_history, beta_history = mini_batch_gradient_descent(X, y, beta, learning_rate, iterations, batch_size)
 
-# Print final parameters
-print("Final parameters after gradient descent:", final_beta)
+# Convert beta_history to a numpy array for easier plotting
+beta_history = np.array(beta_history)
 
-# Optionally, plot the cost history (to visualize convergence)
-import matplotlib.pyplot as plt
+# 1. Print Best-Fit Model Parameters
+print("\nBest-fit model parameters (Intercept and Coefficients):")
+print(f"Intercept: {final_beta[0]:.6f}")
+print(f"TV Coefficient: {final_beta[1]:.6f}")
+print(f"Radio Coefficient: {final_beta[2]:.6f}")
+print(f"Newspaper Coefficient: {final_beta[3]:.6f}")
 
+# 2. Calculate and Print MSE on the training set
+def mean_squared_error(X, y, beta):
+    predictions = X.dot(beta)  # Predicted values
+    mse = np.mean((predictions - y) ** 2)  # Mean squared error
+    return mse
+
+mse = mean_squared_error(X, y, final_beta)
+print(f"\nMean Squared Error on the training set: {mse:.6f}")
+
+# 3. Plot the cost function over iterations
+plt.figure(figsize=(8, 6))
 plt.plot(cost_history)
 plt.xlabel('Iterations')
 plt.ylabel('Cost')
 plt.title('Cost Function over Iterations')
+plt.show()
+
+# 4. Plot the evolution of beta coefficients over iterations
+plt.figure(figsize=(8, 6))
+plt.plot(beta_history[:, 0], label='Intercept')
+plt.plot(beta_history[:, 1], label='TV Coefficient')
+plt.plot(beta_history[:, 2], label='Radio Coefficient')
+plt.plot(beta_history[:, 3], label='Newspaper Coefficient')
+plt.xlabel('Iterations')
+plt.ylabel('Coefficient Value')
+plt.title('Evolution of Coefficients over Iterations')
+plt.legend()
 plt.show()
